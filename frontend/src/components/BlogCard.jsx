@@ -135,8 +135,8 @@ function BlogCard({ blog, onLike, onDelete }) {
         {comments.length === 0 ? (
           <p className="text-sm text-gray-400">No comments yet</p>
         ) : (
-          comments.map((c, i) => (
-            <p key={i} className="text-sm bg-gray-100 p-2 rounded">
+          comments.map((c) => (
+  <p key={c._id || c.text} className="text-sm bg-gray-100 p-2 rounded">
               💬 {typeof c === "string" ? c : c.text}
             </p>
           ))

@@ -13,17 +13,12 @@ export const getBlogs = async () => {
 
 // ✅ Create blog (IMPORTANT: FormData support)
 export const createBlog = async (data) => {
-  try {
-    const res = await API.post("/posts", data, {
-      headers: {
-        "Content-Type": "multipart/form-data", // 🔥 required for file upload
-      },
-    });
-    return res.data;
-  } catch (err) {
-    console.error("Create Blog Error:", err);
-    throw err?.response?.data?.message || "Failed to create blog";
-  }
+  const res = await API.post("/posts", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
 };
 
 // ✅ Delete blog

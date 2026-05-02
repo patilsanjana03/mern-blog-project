@@ -26,7 +26,9 @@ function Login() {
       console.log("STEP 3: LOGIN RESPONSE:", res);
 
       // ✅ Save user (backend does not send token)
-      setAuth(res);
+      setAuth({ user: res.user }); // store user if needed
+
+localStorage.setItem("token", res.token); // 🔥 MOST IMPORTANT
 
       alert("Login successful ✅");
 
