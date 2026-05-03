@@ -1,5 +1,5 @@
 const Blog = require('../models/Blog');
-const redisClient = require('../config/redis'); // <-- Import Redis
+//const redisClient = require('../config/redis'); // <-- Import Redis
 
 
 // @desc    Create a new blog
@@ -190,7 +190,7 @@ const updateBlog = async (req, res) => {
 
     // 🔥 CRITICAL: CACHE INVALIDATION
     // Since the blog was just updated, the cached version is now wrong. Delete it.
-    await redisClient.del(`blog:${req.params.id}`);
+    //await redisClient.del(`blog:${req.params.id}`);
 
     res.status(200).json(updatedBlog);
   } catch (error) {
