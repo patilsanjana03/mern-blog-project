@@ -21,6 +21,16 @@ const app = express();
 // --- 🛡️ SECURITY MIDDLEWARE ---
 app.use(helmet()); // Sets secure HTTP headers
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Allows frontend to load images
+app.use((req, res, next) => {
+    Object.defineProperty(req, 'query', {
+        value: { ...req.query },
+        writable: true,
+        configurable: true,
+        enumerable: true
+    });
+    next();
+});
+
 app.use(mongoSanitize()); // Prevents NoSQL injection attacks
 
 // Rate limiting: max 100 requests per 10 minutes per IP
