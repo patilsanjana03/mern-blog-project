@@ -11,7 +11,7 @@ const connectDB = require('./config/db');
 // Security Middlewares
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+// const mongoSanitize = require('express-mongo-sanitize'); ❌ not used
 
 dotenv.config();
 connectDB();
@@ -21,7 +21,7 @@ const app = express();
 // --- 🛡️ SECURITY MIDDLEWARE ---
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
-app.use(mongoSanitize());
+// app.use(mongoSanitize()); ❌ removed
 
 // Rate limiting
 const limiter = rateLimit({
