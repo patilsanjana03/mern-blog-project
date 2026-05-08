@@ -1,150 +1,198 @@
-import { useState } from "react";
-import { getAuth } from "../utils/auth";
-import { useNavigate } from "react-router-dom";
-import API from "../services/api"; // ✅ for comment API
+import React, { useState } from 'react';
+import API from '../services/api';
+import { Link } from 'react-router-dom';
 
-function BlogCard({ blog, onLike, onDelete }) {
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState(blog.comments || []);
-  const { user } = getAuth();
-  const navigate = useNavigate();
+const BlogCard = ({
+  blog,
+  fetchBlogs,
+  currentUser,
+}) => {
+  const [comment, setComment] = useState('');
 
-  // ✅ Add comment via API
-  const addComment = async () => {
-    if (!comment.trim()) return;
-
+  // ================= LIKE / UNLIKE =================
+  const handleLike = async () => {
     try {
-      const res = await API.post(`/posts/${blog._id}/comment`, {
-        text: comment,
-      });
+      const res = await API.post(
+        `/blogs/${blog._id}/like`
+      );
 
-      // update UI with new comments
-      setComments(res.data.comments || []);
-      setComment("");
+      // UPDATE LIKE COUNT IN UI
+      blog.likesCount = res.data.likesCount;
+
+      fetchBlogs();
 
     } catch (err) {
-      console.error("Comment error:", err);
-      alert("Failed to add comment ❌");
+      console.error('Like error:', err);
+    }
+  };
+
+  // ================= ADD COMMENT =================
+  const addComment = async () => {
+    try {
+      if (!comment.trim()) return;
+
+      await API.post(
+        `/blogs/${blog._id}/comment`,
+        {
+          text: comment,
+        }
+      );
+
+      setComment('');
+
+      fetchBlogs();
+
+    } catch (err) {
+      console.error('Comment error:', err);
+    }
+  };
+
+  // ================= DELETE BLOG =================
+  const deleteBlog = async () => {
+    try {
+      const confirmDelete = window.confirm(
+        'Delete this blog?'
+      );
+
+      if (!confirmDelete) return;
+
+      await API.delete(`/blogs/${blog._id}`);
+
+      fetchBlogs();
+
+    } catch (err) {
+      console.error('Delete error:', err);
     }
   };
 
   return (
     <div
-      onClick={() => navigate(`/blog/${blog._id}`)}
-      className="bg-white p-5 rounded-xl shadow cursor-pointer hover:shadow-lg transition"
+      className="bg-white rounded-2xl shadow-md overflow-hidden p-4"
     >
 
-      {/* IMAGE */}
-      {blog.images?.length > 0 && (
-        <img
-          src={blog.images[0]} // ✅ first image
-          alt="blog"
-          className="w-full h-40 object-cover rounded mb-3"
-        />
+      {/* BLOG IMAGE */}
+      {blog.image && (
+        <Link to={`/blog/${blog._id}`}>
+          <img
+            src={blog.image}
+            alt="blog"
+            className="w-full h-60 object-cover rounded-xl cursor-pointer"
+          />
+        </Link>
       )}
 
-      {/* TITLE */}
-      <h3 className="text-xl font-bold">{blog.title}</h3>
+      {/* BLOG CONTENT */}
+      <div className="mt-4">
 
-      {/* CONTENT */}
-      <p className="text-gray-600 whitespace-pre-line">
-        {blog.content}
-      </p>
+        {/* TITLE */}
+        <Link to={`/blog/${blog._id}`}>
+          <h2 className="text-2xl font-bold cursor-pointer hover:underline">
+            {blog.title}
+          </h2>
+        </Link>
 
-      {/* CATEGORY */}
-      <p className="text-sm mt-1">
-        <b>Category:</b> {blog.category?.toUpperCase()}
-      </p>
+        {/* CATEGORY */}
+        <p className="text-sm text-gray-500 mt-1 uppercase">
+          {blog.category}
+        </p>
 
-      {/* LIKE */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onLike(blog._id);
-        }}
-        className="bg-blue-500 text-white px-3 py-1 rounded mt-2"
-      >
-        👍 {blog.likes || 0}
-      </button>
+        {/* CONTENT */}
+        <p className="text-gray-700 mt-3 line-clamp-4">
+          {blog.content}
+        </p>
 
-      {/* USER: edit + delete */}
-      {user?.email === blog.author && (
-        <div className="mt-3 flex gap-2">
+        {/* ACTIONS */}
+        <div className="flex items-center gap-4 mt-5">
+
+          {/* LIKE BUTTON */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/edit/${blog._id}`);
-            }}
-            className="bg-yellow-500 text-white px-3 py-1 rounded"
+            onClick={handleLike}
+            className="bg-pink-100 px-4 py-2 rounded-full hover:bg-pink-200"
           >
-            Edit
+            ❤️ Like ({blog.likesCount || 0})
           </button>
 
+          {/* COMMENTS COUNT */}
+          <span className="text-gray-600">
+            💬 {blog.comments?.length || 0} comments
+          </span>
+        </div>
+
+        {/* COMMENT INPUT */}
+        <div className="mt-5 flex gap-2">
+          <input
+            type="text"
+            placeholder="Write a comment..."
+            value={comment}
+            onChange={(e) =>
+              setComment(e.target.value)
+            }
+            className="flex-1 border rounded-lg px-3 py-2 outline-none"
+          />
+
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!window.confirm("Delete this blog?")) return;
-              onDelete(blog._id);
-            }}
-            className="bg-red-500 text-white px-3 py-1 rounded"
+            onClick={addComment}
+            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
           >
-            Delete
+            Post
           </button>
         </div>
-      )}
 
-      {/* ADMIN DELETE */}
-      {user?.role === "admin" && user?.email !== blog.author && (
-        <div className="mt-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!window.confirm("Delete this blog?")) return;
-              onDelete(blog._id);
-            }}
-            className="bg-red-500 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
-        </div>
-      )}
+        {/* COMMENTS */}
+        <div className="mt-5">
+          <h4 className="font-semibold mb-2">
+            Comments
+          </h4>
 
-      {/* COMMENTS */}
-      <div className="mt-3">
-        <input
-          value={comment}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Add comment"
-          className="border p-2 w-full rounded"
-        />
+          {blog.comments &&
+          blog.comments.length > 0 ? (
+            blog.comments.map((c, index) => (
+              <div
+                key={index}
+                className="border-b py-2"
+              >
+                <p className="font-medium">
+                  {c.user?.name || 'User'}
+                </p>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            addComment();
-          }}
-          className="bg-green-500 text-white px-3 py-1 mt-2 rounded"
-        >
-          Post
-        </button>
-      </div>
-
-      {/* COMMENT LIST */}
-      <div className="mt-2 space-y-1">
-        {comments.length === 0 ? (
-          <p className="text-sm text-gray-400">No comments yet</p>
-        ) : (
-          comments.map((c) => (
-  <p key={c._id || c.text} className="text-sm bg-gray-100 p-2 rounded">
-              💬 {typeof c === "string" ? c : c.text}
+                <p className="text-gray-700">
+                  {c.text}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">
+              No comments yet
             </p>
-          ))
-        )}
-      </div>
+          )}
+        </div>
 
+        {/* OWNER ACTIONS */}
+        {currentUser &&
+          blog.author &&
+          currentUser._id ===
+            blog.author._id && (
+            <div className="mt-5 flex gap-3">
+
+              {/* EDIT BUTTON */}
+              <Link to={`/edit/${blog._id}`}>
+                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                  Edit
+                </button>
+              </Link>
+
+              {/* DELETE BUTTON */}
+              <button
+                onClick={deleteBlog}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+      </div>
     </div>
   );
-}
+};
 
 export default BlogCard;

@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getBlogs } from "../services/blogService"; // ✅ API import
+import API from "../services/api";
+import Navbar from "../components/Navbar";
 
 function BlogDetails() {
   const { id } = useParams();
+
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -11,12 +13,12 @@ function BlogDetails() {
     fetchBlog();
   }, [id]);
 
-  // ✅ Fetch from backend instead of localStorage
+  // FETCH SINGLE BLOG
   const fetchBlog = async () => {
     try {
-      const blogs = await getBlogs();
-      const found = blogs.find((b) => b._id === id);
-      setBlog(found || null);
+      const res = await API.get(`/blogs/${id}`);
+
+      setBlog(res.data);
     } catch (err) {
       console.error("Fetch blog error:", err);
     } finally {
@@ -24,7 +26,7 @@ function BlogDetails() {
     }
   };
 
-  // ⏳ Loading state
+  // LOADING
   if (loading) {
     return (
       <div className="p-6 text-center text-gray-500">
@@ -33,7 +35,7 @@ function BlogDetails() {
     );
   }
 
-  // ❌ Not found
+  // BLOG NOT FOUND
   if (!blog) {
     return (
       <div className="p-6 text-center text-red-500">
@@ -43,33 +45,67 @@ function BlogDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f2ec] p-6">
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+    <div className="min-h-screen bg-[#f5f2ec]">
+      <Navbar />
+
+      <div className="max-w-4xl mx-auto px-6 py-10 bg-white mt-8 rounded-2xl shadow">
 
         {/* IMAGE */}
         {blog.image && (
           <img
             src={blog.image}
             alt="blog"
-            className="w-full h-60 object-cover rounded mb-4"
+            className="w-full max-h-[500px] object-cover rounded-xl mb-6"
           />
         )}
 
+        {/* CATEGORY */}
+        <p className="text-sm text-gray-500 uppercase mb-2">
+          {blog.category || "General"}
+        </p>
+
         {/* TITLE */}
-        <h1 className="text-3xl font-bold mb-2">
-          {blog.title || "Untitled"}
+        <h1 className="text-5xl font-bold mb-6 leading-tight">
+          {blog.title}
         </h1>
 
-        {/* CATEGORY */}
-        <p className="text-sm text-gray-500 mb-4">
-          {blog.category?.toUpperCase() || "GENERAL"}
-        </p>
-
         {/* CONTENT */}
-        <p className="text-gray-700 whitespace-pre-line leading-7">
-          {blog.content || "No content available"}
-        </p>
+        <div className="text-lg text-gray-700 leading-8 whitespace-pre-line">
+          {blog.content}
+        </div>
 
+        {/* LIKES */}
+        <div className="mt-8 text-lg font-semibold">
+          ❤️ Likes: {blog.likesCount || 0}
+        </div>
+
+        {/* COMMENTS */}
+        <div className="mt-10">
+          <h2 className="text-2xl font-bold mb-4">
+            Comments
+          </h2>
+
+          {blog.comments && blog.comments.length > 0 ? (
+            blog.comments.map((comment, index) => (
+              <div
+                key={index}
+                className="border-b py-3"
+              >
+                <p className="font-semibold">
+                  {comment.user?.name || "User"}
+                </p>
+
+                <p className="text-gray-700">
+                  {comment.text}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">
+              No comments yet
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

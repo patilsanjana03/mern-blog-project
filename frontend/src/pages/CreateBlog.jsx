@@ -6,7 +6,7 @@ function CreateBlog() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
-  const [images, setImages] = useState([]); // ✅ multiple images
+  const [images, setImages] = useState([]);
 
   const navigate = useNavigate();
 
@@ -20,13 +20,15 @@ function CreateBlog() {
 
     try {
       const formData = new FormData();
+
       formData.append("title", title);
       formData.append("content", content);
       formData.append("category", category.toLowerCase());
+      formData.append("status", "published");
 
-      // ✅ append multiple images
+      // ✅ FIXED FIELD NAME (IMPORTANT)
       images.forEach((img) => {
-        formData.append("images", img); // 🔥 field name must match backend
+        formData.append("image", img);
       });
 
       await createBlog(formData);
@@ -42,7 +44,7 @@ function CreateBlog() {
 
     } catch (err) {
       console.error("Create blog error:", err);
-      alert(err || "Failed to create blog ❌");
+      alert(err?.response?.data?.message || "Failed to create blog ❌");
     }
   };
 
@@ -52,7 +54,6 @@ function CreateBlog() {
       {/* LEFT SIDEBAR */}
       <div className="w-1/3 bg-[#f5f2ec] p-10">
         <h1 className="text-3xl font-light mb-6">Create Blog</h1>
-
         <p className="text-gray-600 text-sm leading-6">
           Share your thoughts, creativity, and ideas with the world.
         </p>
@@ -60,12 +61,10 @@ function CreateBlog() {
 
       {/* RIGHT FORM */}
       <div className="w-2/3 flex items-center justify-center bg-white">
-
         <form onSubmit={handleSubmit} className="w-[500px] space-y-5">
 
           <h2 className="text-2xl font-light mb-4">Write your blog</h2>
 
-          {/* Title */}
           <input
             className="w-full border-b p-2 outline-none"
             placeholder="Title..."
@@ -73,7 +72,6 @@ function CreateBlog() {
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          {/* Content */}
           <textarea
             className="w-full border-b p-2 outline-none h-32"
             placeholder="Write your content..."
@@ -81,7 +79,6 @@ function CreateBlog() {
             onChange={(e) => setContent(e.target.value)}
           />
 
-          {/* Category */}
           <input
             className="w-full border-b p-2 outline-none"
             placeholder="Category"
@@ -89,11 +86,11 @@ function CreateBlog() {
             onChange={(e) => setCategory(e.target.value)}
           />
 
-          {/* MULTIPLE IMAGE UPLOAD */}
+          {/* FILE INPUT */}
           <input
             type="file"
             accept="image/*"
-            multiple   // ✅ allow multiple
+            multiple
             className="w-full cursor-pointer"
             onChange={(e) => {
               const files = Array.from(e.target.files);
@@ -115,7 +112,7 @@ function CreateBlog() {
             }}
           />
 
-          {/* MULTIPLE IMAGE PREVIEW */}
+          {/* PREVIEW */}
           {images.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {images.map((img, index) => (
@@ -129,13 +126,11 @@ function CreateBlog() {
             </div>
           )}
 
-          {/* BUTTON */}
           <button className="bg-black text-white px-6 py-2 mt-4">
             Publish
           </button>
 
         </form>
-
       </div>
     </div>
   );

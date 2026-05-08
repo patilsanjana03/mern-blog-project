@@ -38,10 +38,18 @@ localStorage.setItem("token", res.token); // 🔥 MOST IMPORTANT
         navigate("/dashboard");
       }
 
-    } catch (err) {
-      console.log("STEP 4: LOGIN ERROR:", err);
-      alert(err || "Login failed ❌");
-    }
+    }catch (err) {
+  console.log("STEP 4: LOGIN ERROR:", err);
+
+  // Extract real backend message safely
+  const message =
+    err?.response?.data?.message ||  // backend error
+    err?.message ||                  // axios error
+    err ||                           // fallback
+    "Login failed ❌";
+
+  alert(message);
+}
   };
 
   return (
