@@ -26,7 +26,9 @@ function Login() {
       console.log("STEP 3: LOGIN RESPONSE:", res);
 
       // ✅ Save user (backend does not send token)
-      setAuth(res);
+      setAuth({ user: res.user }); // store user if needed
+
+localStorage.setItem("token", res.token); // 🔥 MOST IMPORTANT
 
       alert("Login successful ✅");
 
@@ -36,10 +38,18 @@ function Login() {
         navigate("/dashboard");
       }
 
-    } catch (err) {
-      console.log("STEP 4: LOGIN ERROR:", err);
-      alert(err || "Login failed ❌");
-    }
+    }catch (err) {
+  console.log("STEP 4: LOGIN ERROR:", err);
+
+  // Extract real backend message safely
+  const message =
+    err?.response?.data?.message ||  // backend error
+    err?.message ||                  // axios error
+    err ||                           // fallback
+    "Login failed ❌";
+
+  alert(message);
+}
   };
 
   return (

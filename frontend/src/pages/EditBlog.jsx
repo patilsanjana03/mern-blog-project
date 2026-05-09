@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getBlogs } from "../services/blogService";
 import API from "../services/api";
+import Navbar from "../components/Navbar";
 
 function EditBlog() {
   const { id } = useParams();
@@ -9,152 +9,148 @@ function EditBlog() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("Lifestyle");
-  const [images, setImages] = useState([]);        // ✅ new images
-  const [existingImages, setExistingImages] = useState([]); // ✅ old images
+  const [category, setCategory] = useState("");
+  const [images, setImages] = useState([]); // New files
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Load blog from backend
   useEffect(() => {
     fetchBlog();
   }, [id]);
 
   const fetchBlog = async () => {
     try {
-      const blogs = await getBlogs();
-      const blog = blogs.find((b) => b._id === id);
-
-      if (blog) {
-        setTitle(blog.title);
-        setContent(blog.content);
-        setCategory(blog.category);
-        setExistingImages(blog.images || []);
-      }
+      // ✅ Fetching directly by ID is more efficient than filtering all blogs
+      const res = await API.get(`/blogs/${id}`); 
+      const blog = res.data;
+      setTitle(blog.title);
+      setContent(blog.content);
+      setCategory(blog.category);
+      setLoading(false);
     } catch (err) {
       console.error("Fetch error:", err);
+      alert("Could not load the story ❌");
+      navigate("/dashboard");
     }
   };
 
-  // ✅ Update blog via API
   const handleUpdate = async (e) => {
     e.preventDefault();
 
     try {
       const formData = new FormData();
-
       formData.append("title", title);
       formData.append("content", content);
       formData.append("category", category);
 
-      // add new images
+      // ✅ FIXED: Using "image" (singular) to match your Controller/Multer config
       images.forEach((img) => {
-        formData.append("images", img);
+        formData.append("image", img);
       });
 
-      await API.put(`/posts/${id}`, formData);
+      // ✅ FIXED: Using "/blogs" route instead of "/posts"
+      await API.put(`/blogs/${id}`, formData);
 
-      alert("Blog updated successfully ✅");
-      navigate("/dashboard");
-
+      alert("Story refined successfully ✅");
+      navigate(`/blog/${id}`); 
     } catch (err) {
       console.error("Update error:", err);
-      alert("Failed to update blog ❌");
+      alert("Failed to update story ❌");
     }
   };
 
+  if (loading) return <div className="p-10 text-center font-serif text-slate-400">Opening editor...</div>;
+
   return (
-    <div className="min-h-screen bg-[#f5f2ec] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F9F7F2] font-serif">
+      <Navbar />
 
-      <form
-        onSubmit={handleUpdate}
-        className="bg-white p-8 rounded-2xl shadow-md w-96"
-      >
-
-        <h2 className="text-2xl font-light text-center mb-2">
-          Edit Blog ✨
-        </h2>
-
-        <p className="text-gray-500 text-sm text-center mb-6">
-          Refine your thoughts beautifully
-        </p>
-
-        {/* Title */}
-        <input
-          className="w-full border rounded p-3 mb-3"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
-        />
-
-        {/* Content */}
-        <textarea
-          className="w-full border rounded p-3 mb-3 h-28"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Content"
-        />
-
-        {/* Category */}
-        <select
-          className="w-full border rounded p-3 mb-3"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option>Lifestyle</option>
-          <option>Travel</option>
-          <option>Design</option>
-          <option>Food</option>
-        </select>
-
-        {/* NEW IMAGES */}
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          className="w-full mb-3"
-          onChange={(e) => {
-            const files = Array.from(e.target.files);
-
-            if (files.length > 5) {
-              alert("Max 5 images allowed");
-              return;
-            }
-
-            setImages(files);
-          }}
-        />
-
-        {/* EXISTING IMAGES */}
-        {existingImages.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {existingImages.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                className="h-20 w-full object-cover rounded"
-              />
-            ))}
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        
+        {/* LEFT SIDE: Minimalist Visual Quote */}
+        <div className="hidden lg:flex w-2/5 items-center justify-center p-20 border-r border-slate-200">
+          <div className="max-w-xs space-y-6">
+            <div className="w-12 h-[2px] bg-black"></div>
+            <p className="text-3xl font-light italic text-slate-600 leading-relaxed tracking-wide">
+              "Editing is the soul of storytelling."
+            </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-black">
+              Refining Draft
+            </p>
           </div>
-        )}
+        </div>
 
-        {/* NEW IMAGE PREVIEW */}
-        {images.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {images.map((img, i) => (
-              <img
-                key={i}
-                src={URL.createObjectURL(img)}
-                className="h-20 w-full object-cover rounded"
+        {/* RIGHT SIDE: The Bright Editor */}
+        <div className="flex-1 overflow-y-auto bg-white px-8 md:px-20 py-12">
+          <form onSubmit={handleUpdate} className="max-w-2xl mx-auto space-y-10">
+            
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-600 font-black mb-4">
+              <span className="border-b-2 border-black pb-1">Editing Mode</span>
+              <span>Entry ID: {id.slice(-6)}</span>
+            </div>
+
+            <input
+              className="w-full text-5xl font-bold border-none outline-none text-slate-900 leading-tight placeholder:text-slate-200"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
+            />
+
+            <div className="flex items-center gap-4 border-b border-slate-200 pb-4">
+              <span className="text-xs uppercase font-black text-slate-500">Filed Under</span>
+              <input
+                className="flex-1 text-base font-medium text-slate-800 outline-none placeholder:text-slate-300"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Category"
               />
-            ))}
-          </div>
-        )}
+            </div>
 
-        {/* Button */}
-        <button className="w-full bg-black text-white p-3 rounded">
-          Update Blog
-        </button>
+            <textarea
+              className="w-full min-h-[400px] text-xl leading-relaxed border-none outline-none resize-none text-slate-800 font-sans placeholder:text-slate-200"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Start writing..."
+            />
 
-      </form>
+            {/* PREVIEW NEW IMAGES */}
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-4 pt-4">
+                {images.map((img, index) => (
+                  <img
+                    key={index}
+                    src={URL.createObjectURL(img)}
+                    className="h-24 w-24 object-cover rounded-xl border-2 border-slate-100 shadow-md"
+                    alt="new-preview"
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="pt-10 flex items-center justify-between border-t-2 border-slate-100">
+              <label className="group flex items-center gap-3 cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all shadow-sm">
+                  <span className="text-2xl">+</span>
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-600 group-hover:text-black">Update Media</span>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  multiple 
+                  onChange={(e) => setImages(Array.from(e.target.files))} 
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="bg-black text-white px-12 py-4 rounded-full text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,20 +2,25 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import Profile from "./pages/Profile";              // ✅ ADD THIS
+import Profile from "./pages/Profile";
+import MyStories from "./pages/MyStories"; // 🟢 Import the new page
 import CreateBlog from "./pages/CreateBlog";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Register from "./pages/Register";
 import EditBlog from "./pages/EditBlog";
 import BlogDetails from "./pages/BlogDetails";
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* --- PUBLIC ROUTES --- */}
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
+        {/* --- PROTECTED ROUTES (Require Login) --- */}
+        
+        {/* Main Dashboard - Explore all blogs */}
         <Route
           path="/dashboard"
           element={
@@ -25,16 +30,17 @@ function App() {
           }
         />
 
+        {/* 🟢 My Stories - Dedicated page for user's own blogs only */}
         <Route
-          path="/admin"
+          path="/my-stories"
           element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <MyStories />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ PROFILE ROUTE */}
+        {/* User Profile - Personal settings/details */}
         <Route
           path="/profile"
           element={
@@ -44,38 +50,52 @@ function App() {
           }
         />
 
-
+        {/* Create a New Story */}
         <Route
-  path="/create"
-  element={
-    <ProtectedRoute>
-      <CreateBlog />
-    </ProtectedRoute>
-  }
-/>
+          path="/create"
+          element={
+            <ProtectedRoute>
+              <CreateBlog />
+            </ProtectedRoute>
+          }
+        />
 
-<Route path="/register" element={<Register />} />
+        {/* Edit an Existing Story */}
+        <Route
+          path="/edit/:id"
+          element={
+            <ProtectedRoute>
+              <EditBlog />
+            </ProtectedRoute>
+          }
+        />
 
+        {/* View Specific Story Details */}
+        <Route
+          path="/blog/:id"
+          element={
+            <ProtectedRoute>
+              <BlogDetails />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/edit/:id"
-  element={
-    <ProtectedRoute>
-      <EditBlog />
-    </ProtectedRoute>
-  }
-/>
+        {/* Admin Section */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/blog/:id"
-  element={
-    <ProtectedRoute>
-      <BlogDetails />
-    </ProtectedRoute>
-  }
-/>
-
-
+        {/* 404 - Page Not Found */}
+        <Route 
+          path="*" 
+          element={<div className="p-10 text-center font-serif text-slate-500">Page not found ❌</div>} 
+        />
+        
       </Routes>
     </BrowserRouter>
   );

@@ -10,6 +10,6 @@ client.on('error', (err) => console.error('Redis Client Error', err));
 client.on('connect', () => console.log('  Redis Connected Successfully'));
 
 // Connect immediately
-client.connect();
+//client.connect();
 
 module.exports = client;

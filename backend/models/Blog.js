@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const blogSchema = new mongoose.Schema(
   {
@@ -7,72 +8,77 @@ const blogSchema = new mongoose.Schema(
       required: [true, 'Please add a title'],
       trim: true,
     },
-    slug: { 
-        type: String, unique: true 
-    }, // e.g., "my-awesome-post" - Great for SEO
+
+    slug: {
+      type: String,
+      unique: true,
+    },
+
     content: {
       type: String,
       required: [true, 'Please add some content'],
     },
+
     category: {
       type: String,
       required: [true, 'Please specify a category'],
-      index: true, 
+      index: true,
     },
+
     tags: {
-      type: [String], 
+      type: [String],
       default: [],
-      index: true // Indexing tags makes filtering fast
+      index: true,
     },
+
     image: {
       type: String,
-      default: 'https://via.placeholder.com/800x400?text=No+Image', 
+      default: 'https://via.placeholder.com/800x400?text=No+Image',
     },
+
     status: {
       type: String,
       enum: ['draft', 'published'],
       default: 'published',
-      index: true
+      index: true,
     },
-    image: { 
-      type: String, 
-      default: 'https://via.placeholder.com/800x400?text=No+Image' 
-    },
-    
-    // Downloadable files (PDFs, Docs, etc.)
+
     attachments: [
       {
         filename: String,
         url: String,
         fileType: String,
-      }
+      },
     ],
+
     views: {
       type: Number,
       default: 0,
     },
-    // NEW: Integer for lightning-fast sorting
-    likesCount: { 
-        type: Number, 
-        default: 0 
-    }, 
-    // NEW: Soft Delete flag
-    isDeleted: { 
-        type: Boolean, 
-        default: false 
+
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
 
     author: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', 
+      ref: 'User',
       required: true,
     },
+
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
       },
     ],
+
     comments: [
       {
         user: {
@@ -80,10 +86,12 @@ const blogSchema = new mongoose.Schema(
           ref: 'User',
           required: true,
         },
+
         text: {
           type: String,
           required: true,
         },
+
         date: {
           type: Date,
           default: Date.now,
@@ -91,14 +99,31 @@ const blogSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true } 
+  {
+    timestamps: true,
+  }
 );
 
-// SENIOR MOVE: Create a Compound Text Index for optimized searching
-// Weights give the title higher importance than the content in search results
+// TEXT SEARCH INDEX
 blogSchema.index(
-  { title: 'text', content: 'text' }, 
+  { title: 'text', content: 'text' },
   { weights: { title: 5, content: 1 } }
 );
+
+
+
+
+// AUTO GENERATE UNIQUE SLUG
+blogSchema.pre('save', async function () {
+  if (this.isModified('title')) {
+    this.slug =
+      slugify(this.title, {
+        lower: true,
+        strict: true,
+      }) +
+      '-' +
+      Date.now();
+  }
+});
 
 module.exports = mongoose.model('Blog', blogSchema);
