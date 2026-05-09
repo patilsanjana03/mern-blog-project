@@ -1,150 +1,131 @@
-import { useState } from "react";
-import { getAuth } from "../utils/auth";
-import { useNavigate } from "react-router-dom";
-import API from "../services/api"; // ✅ for comment API
+import React, { useState } from 'react';
+import API from '../services/api';
+import { Link } from 'react-router-dom';
 
-function BlogCard({ blog, onLike, onDelete }) {
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState(blog.comments || []);
-  const { user } = getAuth();
-  const navigate = useNavigate();
+const BlogCard = ({
+  blog,
+  fetchBlogs,
+  currentUser,
+}) => {
+  const [comment, setComment] = useState('');
 
-  // ✅ Add comment via API
-  const addComment = async () => {
-    if (!comment.trim()) return;
-
+  // ================= LIKE / UNLIKE =================
+  const handleLike = async () => {
     try {
-      const res = await API.post(`/posts/${blog._id}/comment`, {
-        text: comment,
-      });
+      const res = await API.post(
+        `/blogs/${blog._id}/like`
+      );
 
-      // update UI with new comments
-      setComments(res.data.comments || []);
-      setComment("");
+      // UPDATE LIKE COUNT IN UI
+      blog.likesCount = res.data.likesCount;
+
+      fetchBlogs();
 
     } catch (err) {
-      console.error("Comment error:", err);
-      alert("Failed to add comment ❌");
+      console.error('Like error:', err);
     }
   };
 
-  return (
-    <div
-      onClick={() => navigate(`/blog/${blog._id}`)}
-      className="bg-white p-5 rounded-xl shadow cursor-pointer hover:shadow-lg transition"
-    >
+  // ================= ADD COMMENT =================
+  const addComment = async () => {
+    try {
+      if (!comment.trim()) return;
 
-      {/* IMAGE */}
-      {blog.images?.length > 0 && (
-        <img
-          src={blog.images[0]} // ✅ first image
-          alt="blog"
-          className="w-full h-40 object-cover rounded mb-3"
-        />
+      await API.post(
+        `/blogs/${blog._id}/comment`,
+        {
+          text: comment,
+        }
+      );
+
+      setComment('');
+
+      fetchBlogs();
+
+    } catch (err) {
+      console.error('Comment error:', err);
+    }
+  };
+
+  // ================= DELETE BLOG =================
+  const deleteBlog = async () => {
+    try {
+      const confirmDelete = window.confirm(
+        'Delete this blog?'
+      );
+
+      if (!confirmDelete) return;
+
+      await API.delete(`/blogs/${blog._id}`);
+
+      fetchBlogs();
+
+    } catch (err) {
+      console.error('Delete error:', err);
+    }
+  };
+
+// Inside BlogCard.jsx - replace the return statement UI:
+return (
+  <div className="glass-card hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] group">
+    {/* Image Container */}
+    <div className="relative overflow-hidden aspect-[16/10]">
+      {blog.image && (
+        <Link to={`/blog/${blog._id}`}>
+          <img
+            src={`http://localhost:5000${blog.image}`} 
+            alt="blog"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </Link>
       )}
+      <div className="absolute top-4 left-4">
+        <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-700 shadow-sm">
+          {blog.category}
+        </span>
+      </div>
+    </div>
 
-      {/* TITLE */}
-      <h3 className="text-xl font-bold">{blog.title}</h3>
+    {/* Content */}
+    <div className="p-6">
+      <Link to={`/blog/${blog._id}`}>
+        <h2 className="text-xl font-bold text-slate-900 mb-3 leading-snug hover:text-slate-700 transition-colors">
+          {blog.title}
+        </h2>
+      </Link>
 
-      {/* CONTENT */}
-      <p className="text-gray-600 whitespace-pre-line">
+      <p className="text-slate-500 text-sm line-clamp-3 mb-6 leading-relaxed">
         {blog.content}
       </p>
 
-      {/* CATEGORY */}
-      <p className="text-sm mt-1">
-        <b>Category:</b> {blog.category?.toUpperCase()}
-      </p>
-
-      {/* LIKE */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onLike(blog._id);
-        }}
-        className="bg-blue-500 text-white px-3 py-1 rounded mt-2"
-      >
-        👍 {blog.likes || 0}
-      </button>
-
-      {/* USER: edit + delete */}
-      {user?.email === blog.author && (
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/edit/${blog._id}`);
-            }}
-            className="bg-yellow-500 text-white px-3 py-1 rounded"
-          >
-            Edit
+      {/* Interaction Bar */}
+      <div className="flex items-center justify-between border-t border-slate-50 pt-4">
+        <div className="flex gap-4">
+          <button onClick={handleLike} className="flex items-center gap-1.5 text-slate-600 hover:text-pink-500 transition-colors">
+            <span className="text-lg">❤️</span>
+            <span className="text-sm font-medium">{blog.likesCount || 0}</span>
           </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!window.confirm("Delete this blog?")) return;
-              onDelete(blog._id);
-            }}
-            className="bg-red-500 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
+          <div className="flex items-center gap-1.5 text-slate-600">
+            <span className="text-lg">💬</span>
+            <span className="text-sm font-medium">{blog.comments?.length || 0}</span>
+          </div>
         </div>
-      )}
 
-      {/* ADMIN DELETE */}
-      {user?.role === "admin" && user?.email !== blog.author && (
-        <div className="mt-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!window.confirm("Delete this blog?")) return;
-              onDelete(blog._id);
-            }}
-            className="bg-red-500 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
-        </div>
-      )}
-
-      {/* COMMENTS */}
-      <div className="mt-3">
-        <input
-          value={comment}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Add comment"
-          className="border p-2 w-full rounded"
-        />
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            addComment();
-          }}
-          className="bg-green-500 text-white px-3 py-1 mt-2 rounded"
-        >
-          Post
-        </button>
-      </div>
-
-      {/* COMMENT LIST */}
-      <div className="mt-2 space-y-1">
-        {comments.length === 0 ? (
-          <p className="text-sm text-gray-400">No comments yet</p>
-        ) : (
-          comments.map((c, i) => (
-            <p key={i} className="text-sm bg-gray-100 p-2 rounded">
-              💬 {typeof c === "string" ? c : c.text}
-            </p>
-          ))
+        {/* Owner Controls */}
+        {currentUser?._id === blog.author?._id && (
+          <div className="flex gap-2">
+            <Link to={`/edit/${blog._id}`} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-blue-500">
+              ✏️
+            </Link>
+            <button onClick={deleteBlog} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-red-500">
+              🗑️
+            </button>
+          </div>
         )}
       </div>
-
     </div>
-  );
-}
+  </div>
+);
+};
 
 export default BlogCard;

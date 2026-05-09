@@ -1,25 +1,51 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
+  try {
     let token;
 
-    // JWT is sent in the Authorization header as: Bearer <token>
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
+    // ✅ Check Authorization header
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = decoded; // decoded has { id, role }
+      // 🔥 DEBUG (optional, remove later)
+      console.log("TOKEN:", token);
 
-            next();
-        } catch (error) {
-            return res.status(401).json({ message: 'Not authorized, token failed' });
-        }
+      // ✅ Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // 🔥 DEBUG
+      console.log("DECODED:", decoded);
+
+      // ✅ Fetch full user from DB
+      const user = await User.findById(decoded.id).select('-password');
+
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      // ✅ Attach user to request
+      req.user = user;
+
+      return next(); // 🔥 IMPORTANT (return added)
+
+    } else {
+      return res.status(401).json({
+        message: 'No token, authorization denied'
+      });
     }
 
-    if (!token) {
-        return res.status(401).json({ message: 'Not authorized, no token provided' });
-    }
+  } catch (error) {
+    console.error("AUTH ERROR:", error.message);
+
+    return res.status(401).json({
+      message: 'Token is invalid or expired'
+    });
+  }
 };
 
 module.exports = { protect };
