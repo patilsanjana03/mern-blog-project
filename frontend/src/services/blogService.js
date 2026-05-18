@@ -4,18 +4,11 @@ import API from "./api";
 export const getBlogs = async () => {
   try {
     const res = await API.get("/blogs");
-
-    // BACKEND RETURNS:
-    // {
-    //   success: true,
-    //   data: blogs
-    // }
-
+    // Since the backend now directly returns the array, 
+    // res.data is the array [blog1, blog2, ...]
     return res.data;
-
   } catch (err) {
     console.error("Fetch Blogs Error:", err);
-
     throw (
       err?.response?.data?.message ||
       "Failed to fetch blogs"
@@ -27,12 +20,9 @@ export const getBlogs = async () => {
 export const getBlogById = async (id) => {
   try {
     const res = await API.get(`/blogs/${id}`);
-
     return res.data;
-
   } catch (err) {
     console.error("Get Blog Error:", err);
-
     throw (
       err?.response?.data?.message ||
       "Failed to fetch blog"
@@ -56,12 +46,9 @@ export const createBlog = async (data) => {
         },
       }
     );
-
     return res.data;
-
   } catch (err) {
     console.error("Create Blog Error:", err);
-
     throw (
       err?.response?.data?.message ||
       "Failed to create blog"
@@ -70,10 +57,7 @@ export const createBlog = async (data) => {
 };
 
 // ================= UPDATE BLOG =================
-export const updateBlog = async (
-  id,
-  data
-) => {
+export const updateBlog = async (id, data) => {
   try {
     const token = localStorage.getItem("token");
 
@@ -88,12 +72,9 @@ export const updateBlog = async (
         },
       }
     );
-
     return res.data;
-
   } catch (err) {
     console.error("Update Blog Error:", err);
-
     throw (
       err?.response?.data?.message ||
       "Failed to update blog"
@@ -104,15 +85,20 @@ export const updateBlog = async (
 // ================= DELETE BLOG =================
 export const deleteBlog = async (id) => {
   try {
+    // FIXED: Added headers with token because the backend delete route uses 'protect'
+    const token = localStorage.getItem("token");
+
     const res = await API.delete(
-      `/blogs/${id}`
+      `/blogs/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
-
     return res.data;
-
   } catch (err) {
     console.error("Delete Blog Error:", err);
-
     throw (
       err?.response?.data?.message ||
       "Failed to delete blog"

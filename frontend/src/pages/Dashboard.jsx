@@ -19,17 +19,15 @@ function Dashboard() {
     try {
       const response = await getBlogs();
 
-      // response = { success: true, data: [...] }
-
+      // FIXED: response is now directly the array of blogs, NOT an object with .data
       setBlogs(
-        Array.isArray(response.data)
-          ? response.data
+        Array.isArray(response)
+          ? response
           : []
       );
 
     } catch (err) {
       console.log("Fetch error:", err);
-
       setBlogs([]);
     }
   };
@@ -41,7 +39,6 @@ function Dashboard() {
 
   // ================= FILTER BLOGS =================
   const filteredBlogs = blogs.filter((blog) => {
-
     const matchesSearch =
       blog.title
         ?.toLowerCase()
@@ -60,7 +57,6 @@ function Dashboard() {
   // ================= CATEGORIES =================
   const categories = [
     "All",
-
     ...new Set(
       blogs.map(
         (blog) => blog.category
@@ -70,18 +66,15 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5f2ec]">
-
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-
           <h2 className="text-3xl font-light">
             Explore Blogs
           </h2>
-
           <Link to="/create">
             <button className="bg-black text-white px-5 py-2 rounded hover:bg-gray-800">
               + Create
@@ -102,7 +95,6 @@ function Dashboard() {
 
         {/* CATEGORY FILTER */}
         <div className="flex gap-3 mb-6 flex-wrap">
-
           {categories.map((cat) => (
             <button
               key={cat}
@@ -120,19 +112,14 @@ function Dashboard() {
           ))}
         </div>
 
-        {/* BLOGS */}
+        {/* BLOGS GRID */}
         {filteredBlogs.length === 0 ? (
-
           <p className="text-center text-gray-500 mt-10">
             No blogs found
           </p>
-
         ) : (
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
             {filteredBlogs.map((blog) => (
-
               <BlogCard
                 key={blog._id}
                 blog={blog}
