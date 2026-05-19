@@ -108,3 +108,33 @@ exports.deleteBlog = async (req, res) => {
     res.status(200).json({ message: "Blog removed successfully" });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
+// 7. ADD COMMENT TO BLOG
+exports.addComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const blog = await Blog.findById(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({
+        message: "Blog not found"
+      });
+    }
+
+    const comment = {
+      user: req.user._id,
+      text
+    };
+
+    blog.comments.push(comment);
+
+    await blog.save();
+
+    res.status(200).json(blog.comments);
+
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};

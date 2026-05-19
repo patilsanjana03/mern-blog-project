@@ -10,7 +10,8 @@ const {
   getMyStories, 
   getBlogById, 
   updateBlog, 
-  handleLike, 
+  handleLike,
+  addComment,
   deleteBlog 
 } = require('../controllers/blogController');
 
@@ -25,6 +26,9 @@ router.put('/:id', protect, upload.fields([{ name: 'image', maxCount: 1 }]), upd
 
 // Interaction & Destruction Endpoints
 router.post('/:id/like', protect, handleLike);
+
+router.post('/:id/comment', protect, addComment);
+
 router.delete('/:id', protect, deleteBlog);
 
 module.exports = router;
